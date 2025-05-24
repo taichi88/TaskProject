@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Application;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using System.Collections.Generic;
@@ -37,9 +38,10 @@ namespace TaskProject.Controllers
         [HttpPost]
         public ActionResult<Patient> CreatePatient([FromBody] CreatePatientDto dto)
         {
-            return Ok();
+   return Ok();
 
         }
+
 
     }
 

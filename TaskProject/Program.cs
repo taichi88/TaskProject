@@ -1,8 +1,15 @@
+using Application.Interfaces;
+using Application.Services;
+using Domain.IRepositories;
 using Microsoft.EntityFrameworkCore;
+using MyMigrations.Repositories;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddScoped<IPersonRepository, PersonRepository>();
+builder.Services.AddScoped<IPersonService, PersonService>();
 
 
 builder.Services.AddDbContext<MedicalDbContext>(options =>
@@ -18,6 +25,7 @@ builder.Services.AddSwaggerGen(options =>
     var xmlFile = Path.Combine(AppContext.BaseDirectory, "TaskProject.xml");
     options.IncludeXmlComments(xmlFile); // This tells Swagger to include the XML fileas comments
 });
+
 
 var app = builder.Build();
 

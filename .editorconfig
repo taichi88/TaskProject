@@ -1,0 +1,13 @@
+root = true
+
+# All files
+[*]
+indent_style = space
+
+# XML files
+[*.xml]
+indent_size = 2
+
+# C# files - code analysis
+[*.cs]
+dotnet_diagnostic.CA1822.severity = warning

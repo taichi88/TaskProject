@@ -1,17 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-namespace TaskProject.ArchitecutreTest
+using NetArchTest.Rules;
+
+namespace TaskProject.ArchitectureTest
 {
     public class DomainTest
     {
         [Fact]
-        public void Test1()
+       public void ShouldPass_whenDomainDoesNotReferenceApplication()
         {
-            Assert.True(true);
+            //arrange
+            var types = Types.InAssembly(Assembly.Load("Domain"));
+
+            // Act
+
+            var result = types
+                .ShouldNot()
+                .HaveDependencyOn("Application")
+                .GetResult();
+
+            // Assert
+            Assert.True(result.IsSuccessful);
         }
     }
 }

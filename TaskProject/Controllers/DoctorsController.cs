@@ -14,9 +14,9 @@ namespace TaskProject.Controllers
     {
         // Mock data for doctors
         private static readonly List<Doctor> Doctors = new List<Doctor>
-    {
+        {
         
-    };
+        };
         /// <summary>
         /// Gets all Doctors.
         /// </summary>
