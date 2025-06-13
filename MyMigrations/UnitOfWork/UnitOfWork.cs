@@ -1,71 +1,118 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HealthcareApi.Domain.Models;
-using HealthcareApi.Application.IUnitOfWork;
+﻿using HealthcareApi.Application.IUnitOfWork;
+using HealthcareApi.Domain.IRepositories.IDapperRepositories;
 using HealthcareApi.Domain.IRepositories;
+using HealthcareApi.Infrastructure.Repositories.DapperRepository;
 using HealthcareApi.Infrastructure.Repositories;
 using HealthcareApi.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using HealthcareApi.Domain.IRepositories.IDapperRepositories;
-using HealthcareApi.Infrastructure.Repositories.DapperRepository;
+using System.Data;
+using System.Formats.Asn1;
 
-namespace HealthcareApi.Infrastructure.UnitOfWork
+public class UnitOfWork : IUnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    private readonly HealthcareApiContext _context;
+    private IDbContextTransaction _transaction;
+
+    public IPatientRepository Patients { get; }
+    public IPersonRepository Persons { get; }
+    public IDoctorRepository Doctors { get; }
+
+    public IDapperPaymentRepository Payments { get; private set; }
+    public IDapperAppointmentRepository Appointments { get; private set; }
+    public IDapperAccountRepository Accounts { get; private set; }
+
+    public IDbTransaction DapperTransaction { get; private set; }
+
+    private IDbConnection DapperConnection;
+
+
+    public UnitOfWork(HealthcareApiContext context, IDbConnection dapperConnection)
     {
-        private readonly HealthcareApiContext _context;
-        
-        private IDbContextTransaction _transaction;
-
-        public UnitOfWork(HealthcareApiContext context )
-        {
-            _context = context;
-            Persons = new PersonRepository(_context);
-            Doctors = new DoctorRepository(_context);
-            Patients = new PatientRepository(_context);
-            Appointments = new DapperAppointmentRepository(_context);
-        }
-        public IDbTransaction DapperTransaction => _transaction?.GetDbTransaction(); // for dapper
-        public IPatientRepository Patients { get; }
-        public IPersonRepository Persons { get; }
-        public IDoctorRepository Doctors { get; }
-        public IDapperAppointmentRepository Appointments { get; }
+        DapperConnection = dapperConnection;
 
 
-        public async Task<IDbContextTransaction> BeginTransactionAsync()
-        {
-            _transaction = await _context.Database.BeginTransactionAsync();
-            return _transaction;
-        }
-        public async Task<int> CommitAsync()
-        {
-            if (_transaction != null)
+        DapperConnection.Open();
+        DapperTransaction = DapperConnection.BeginTransaction();
+
+        _context = context;
+        Persons = new PersonRepository(_context);
+        Doctors = new DoctorRepository(_context);
+        Patients = new PatientRepository(_context);
+        // Initialize Dapper repos without transaction initially
+        Payments = new DapperPaymentRepository(DapperConnection, DapperTransaction);
+        Appointments = new DapperAppointmentRepository(DapperConnection, DapperTransaction);
+        Accounts = new DapperAccountRepository(DapperConnection, DapperTransaction);
+
+
+        DapperTransaction.Commit();
+        DapperConnection.Close();
+        DapperTransaction.Dispose();          
+        DapperTransaction = null;
+
+    }
+
+   
+    public async Task DapperTrnsactionAndConnectionAsync()
+    {
+        DapperTransaction = null;
+       
+            if ( DapperConnection.State != ConnectionState.Open)
             {
-                await _context.SaveChangesAsync();       // Save changes
-                await _transaction.CommitAsync();        // Commit transaction
-            }
-            else
-            {
-                return await _context.SaveChangesAsync(); // Just save if no transaction
+                DapperConnection.Open();
             }
 
-            return 1; // or return number of saved rows if needed
-        }
-        public async Task RollbackAsync()
-        {
-            if (_transaction != null)
+            if (DapperTransaction == null)
             {
-                await _transaction.RollbackAsync();
+                DapperTransaction = DapperConnection.BeginTransaction();
             }
-        }
-        public void Dispose()
+    }
+
+    public async Task DapperCommitAsync()
+    {
+        if (DapperTransaction != null)
         {
-            _transaction?.Dispose();
-            _context.Dispose();
+             DapperTransaction.Commit(); // ✅ Commit transaction
+             DapperConnection.Close();   // ✅ Close the connection
+            DapperTransaction.Dispose();           // Clean up
+            DapperTransaction = null;
         }
+    }
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        _transaction = await _context.Database.BeginTransactionAsync();
+
+        // Re-initialize Dapper repositories with the transaction
+        var dbTransaction = _transaction.GetDbTransaction();
+        return _transaction;
+    }
+
+    public async Task<int> CommitAsync()
+    {
+        if (_transaction != null)
+        {
+            await _context.SaveChangesAsync();
+            await _transaction.CommitAsync();
+        }
+        else
+        {
+            return await _context.SaveChangesAsync();
+        }
+
+        return 1;
+    }
+
+    public async Task RollbackAsync()
+    {
+        if (_transaction != null)
+        {
+            await _transaction.RollbackAsync();
+        }
+    }
+
+    public void Dispose()
+    {
+        _transaction?.Dispose();
+        _context.Dispose();
     }
 }

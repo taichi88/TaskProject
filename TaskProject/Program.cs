@@ -4,16 +4,18 @@ using HealthcareApi.Domain.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using HealthcareApi.Infrastructure.Repositories;
 using HealthcareApi.Application.IUnitOfWork;
-using HealthcareApi.Infrastructure.UnitOfWork;
 using HealthcareApi.Infrastructure;
 using HealthcareApi.Application.Interfaces;
-
-
-
-
 using HealthcareApi.Infrastructure.Data.Dapper.DapperDbContext;
 using HealthcareApi.Domain.IRepositories.IDapperRepositories;
 using HealthcareApi.Infrastructure.Repositories.DapperRepository;
+using Microsoft.Identity.Client;
+using System.Data;
+using Microsoft.Data.SqlClient;
+
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,10 +35,17 @@ builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IDapperPaymentRepository, DapperPaymentRepository>();
+builder.Services.AddScoped<IDapperAppointmentRepository, DapperAppointmentRepository>();
+builder.Services.AddScoped<IDapperAccountRepository, DapperAccountRepository>();
+
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<DapperDbContext>();
 builder.Services.AddAutoMapper(typeof(HealthcareApi.Application.AutoMapperClass));
 builder.Services.AddLogging();
-builder.Services.AddScoped<IDapperAppointmentRepository, DapperAppointmentRepository>();
+builder.Services.AddScoped<IDbConnection>(_ => new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"))); 
+
 
 
 

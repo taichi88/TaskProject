@@ -21,6 +21,8 @@ public partial class Person
 
     public string? Address { get; set; }
 
+    public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
+
     public virtual DeskStaff? DeskStaff { get; set; }
 
     public virtual Doctor? Doctor { get; set; }

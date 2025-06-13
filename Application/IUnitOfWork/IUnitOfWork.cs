@@ -10,6 +10,7 @@ using HealthcareApi.Domain.IRepositories.IDapperRepositories;
 using Microsoft.EntityFrameworkCore.Storage;
 
 
+
 namespace HealthcareApi.Application.IUnitOfWork
 {
     public interface IUnitOfWork : IDisposable
@@ -18,10 +19,18 @@ namespace HealthcareApi.Application.IUnitOfWork
         IPatientRepository Patients { get; }
         IDoctorRepository Doctors { get; }
 
+        IDapperPaymentRepository Payments { get; } // added Payment
+
+        IDapperAccountRepository Accounts { get; }
+
         IDapperAppointmentRepository Appointments { get; }
-
-
         IDbTransaction? DapperTransaction { get; }
+
+        public Task DapperTrnsactionAndConnectionAsync();
+
+        public  Task DapperCommitAsync();
+
+        public 
 
         Task<int> CommitAsync();
         public Task RollbackAsync();

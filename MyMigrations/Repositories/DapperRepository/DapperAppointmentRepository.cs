@@ -22,10 +22,11 @@ namespace HealthcareApi.Infrastructure.Repositories.DapperRepository
         private readonly IDbConnection _connection;
         private readonly IDbTransaction? _transaction;
 
-        public DapperAppointmentRepository(HealthcareApiContext context)
+        public DapperAppointmentRepository(IDbConnection connection, IDbTransaction? transaction = null)
         {
-            _connection = context.Database.GetDbConnection();
-            _transaction = context.Database.CurrentTransaction?.GetDbTransaction();
+            _connection = connection;
+            _transaction = transaction;
+            
         }
 
         public async Task<Appointment?> CreateAppointmentAsync(Appointment appointment)

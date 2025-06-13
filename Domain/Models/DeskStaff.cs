@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace HealthcareApi.Domain.Models;
 
-
 public partial class DeskStaff
 {
     public int Id { get; set; }
